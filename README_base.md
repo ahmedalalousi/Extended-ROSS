@@ -1,0 +1,106 @@
+# Welcome to Simplified ROSS!
+
+Welcome to a leaner, meaner, *faster* version of ROSS.
+While the entire history of ROSS has been preserved in this repository, a major change in the directory structure has made getting the full history of a file somewhat of a pain.
+You may find the now-deprecated version at the [ROSS-Legacy tag](https://github.com/ROSS-org/ROSS/releases/tag/Legacy) in this repository.
+Using this repository you can compare files from the new `ROSS/core` to `ROSS/ross`.
+For a detailed list of changes between old ROSS and SR please visit [the wiki](https://github.com/ROSS-org/ROSS/wiki/Differences-between-Simplified-ROSS-and-ROSS-Legacy).
+
+For the most recent docs and other important posts about ROSS, see the [ROSS webpage](http://ross-org.github.io).
+
+[![Build Status](https://travis-ci.com/ROSS-org/ROSS.svg?branch=master)](https://travis-ci.com/ROSS-org/ROSS)
+[![codecov.io](http://codecov.io/github/ROSS-org/ROSS/coverage.svg?branch=master)](http://codecov.io/github/ROSS-org/ROSS?branch=master)
+[![Doxygen](https://img.shields.io/badge/doxygen-reference-blue.svg)](http://ross-org.github.io/ROSS-docs/docs/html)
+
+## History
+
+ROSS's history starts with a one-week re-implementation of [Georgia Tech Time Warp (GTW)](http://www.cc.gatech.edu/computing/pads/tech-parallel-gtw.html) by Shawn Pearce and Dave Bauer in 1999.
+After 10 years of in-house development, version 5.0 of [Rensselaer's Optimistic Simulation System](http://sourceforge.net/projects/pdes/) went live at SourceForge.net.
+Thus the official version history began!
+
+Through the years ROSS has migrated from CVS, to SVN, to Git and GitHub.com.
+The code was maintained by Chris Carothers and his graduate students at RPI ([publications](http://cs.rpi.edu//~chrisc/#publications)).
+Over the years, several features (including a shared-memory version) were implemented within ROSS.
+Some of these features have since been optimized out, leaving behind cruft.
+
+In early 2015 a sleeker version of ROSS was released.
+Developed as Simplified ROSS ([gonsie/SR](http://github.com/gonsie/SR)), this version removed many files, functions, and variables that had become deprecated over time.
+
+## Requirements
+
+1. ROSS is written in C standard and thus requires a C compiler (C11 is prefered, but not required).
+2. The build system is [CMake](http://cmake.org), and we require version 3.5 or higher.
+3. ROSS relies on MPI.
+   We recommend the [MPICH](http://www.mpich.org) implementation.
+
+## Startup Instructions
+
+1. Clone the repository to your local machine:
+  ```
+  git clone -b master --single-branch git@github.com:ROSS-org/ROSS.git
+  cd ROSS
+  ```
+  Since the ROSS repostiory is quite large, it is recommended that you only clone the master branch.
+  To speed up the clone command even more, use the `--depth=1` argument.
+
+2. *Optional* Install the submodules:
+  ```
+  git submodule init
+  git submodule update
+  ```
+  Currently, ROSS includes one submodule:
+  - [RISA](https://github.com/ROSS-org/RISA) ROSS In Situ Analysis
+
+3. *Optional* Symlink your model to ROSS.
+Please [this blog post](https://ross-org.github.io/setup/build-model-with-ross.html) for details about creating and integrating a model with ROSS.
+  ```
+  ln -s ~/path-to/your-existing-model models/your-model-name
+  ```
+
+4. Create a build directory.
+ROSS developers typically do out-of-tree builds.  See the [Installation page](https://ross-org.github.io/setup/installation.html) for more details.
+  ```
+  cd ~/directory-of-builds/
+  mkdir ROSS-build
+  cd ROSS-build
+  ccmake ~/path-to/ROSS
+  ```
+We reccomend the following CMake parameters:
+  ```
+  cmake .. -DROSS_BUILD_MODELS=ON -DCMAKE_INSTALL_PREFIX="$(realpath ./bin)" \
+      -DCMAKE_C_COMPILER=mpicc -DCMAKE_BUILD_TYPE=Debug -DCMAKE_C_FLAGS="-g -Wall"
+  ```
+
+5. Make your model(s) with one of the following commands
+  ```
+  make -k         // ignore errors from other models
+  make -j 12      // parallel build
+  make model-name // build only one model
+  ```
+
+6. Run your model.
+See [this blog post](https://ross-org.github.io/setup/running-sim.html) for details about the ROSS command line options.
+  ```
+  cd ~/directory-of-builds/ROSS-build/models/your-model
+  ./your-model --synch=1               // sequential mode
+  mpirun -np 2 ./your-model --synch=2  // conservative mode
+  mpirun -np 2 ./your-model --synch=3  // optimistic mode
+  mpirun -np 1 ./your-model --synch=4  // optimistic debug mode (note: not a parallel execution!)
+  mpirun -np 2 ./your-model --synch=5  // optimistic realtime mode
+  mpirun -np 1 ./your-model --synch=6  // reverse handler check mode
+  ```
+
+You can pass arguments to your model from the command line as shown above. However, for better readability, it is also possible to pass command line arguments through a text file.
+
+A sample text file sample.txt is included below.
+  ```
+  # Synchonization protocol
+  --synch=4
+  # AVL Tree contains 2^avl-size nodes (default 18)
+  --avl-size=18
+  ```
+
+The text file is then parsed by ROSS through the args-file command line argument.
+  ```
+  ./your-model --args-file=sample.txt
+  ```
